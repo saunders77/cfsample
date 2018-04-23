@@ -101,14 +101,22 @@ Office.initialize = function(reason){
 
     // helper code for getting temperature
     var temps = {};
+    var scales{};
     temps["boiler"] = 104.3;
     temps["mixer"] = 44.0;
     temps["furnace"] = 586.9;
+    scales["Ganache Mixer"] = 500;
+    scales["Truffle Mixer"] = 300;
     furnaceHistory = [];
     function startTime(){
         temps["boiler"] += Math.pow(Math.random() - 0.45, 3) * 2;
         temps["mixer"] += Math.pow(Math.random() - 0.55, 3) * 2;
         temps["furnace"] += Math.pow(Math.random() - 0.40, 3) * 2;
+        scales["Ganache Mixer"] += (Math.random() - 0.45) * 5;
+        if(scales["Ganache Mixer"] < 300){
+            scales["Ganache Mixer"] = 300;
+        }
+        scales["Truffle Mixer"] += (Math.random() - 0.5) * 5;
         furnaceHistory.push([temps["furnace"]]);
         if(furnaceHistory.length > 50){
             furnaceHistory.shift();
@@ -151,6 +159,14 @@ Office.initialize = function(reason){
         } 
         getNextTemperature(); 
     } 
+
+    function streamWeight(scaleID, call){
+        function getNextWeight(){ 
+            call.setResult(scales[scaleID]); 
+            setTimeout(getNextWeight, 500); 
+        } 
+        getNextWeight(); 
+    }
 
     function secondHighestTemp(temperatures){ 
         var highest = -273, secondHighest = -273;
@@ -304,6 +320,24 @@ Office.initialize = function(reason){
                 name: "interval (ms)",
                 description: "The time between calls",
                 valueType: Excel.CustomFunctionValueType.number,
+                valueDimensionality: Excel.CustomFunctionDimensionality.scalar,
+            },
+        ],
+        options: { batch: false,  stream: true }
+    };
+    Excel.Script.CustomFunctions["CONTOSO"]["STREAMWEIGHT"] = {
+        call: streamWeight,
+        description: "Returns the weight of the materials in the machine every 500 ms.",
+        helpUrl: "https://www.contoso.com/help.html",
+        result: {
+            resultType: Excel.CustomFunctionValueType.number,
+            resultDimensionality: Excel.CustomFunctionDimensionality.scalar,
+        },
+        parameters: [
+            {
+                name: "Scale ID",
+                description: "The machine to be measured",
+                valueType: Excel.CustomFunctionValueType.string,
                 valueDimensionality: Excel.CustomFunctionDimensionality.scalar,
             },
         ],
